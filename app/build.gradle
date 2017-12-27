@@ -31,7 +31,7 @@ dependencies {
     compile 'com.google.android.support:wearable:2.1.0'
     // https://mvnrepository.com/artifact/org.eclipse.paho/org.eclipse.paho.client.mqttv3
     compile group: 'org.eclipse.paho', name: 'org.eclipse.paho.client.mqttv3', version: '1.2.0'
-
+    compile 'org.jraf:android-wear-color-picker:1.0.1'
     compile 'org.eclipse.paho:org.eclipse.paho.client.mqttv3:1.2.0'
     compile 'org.eclipse.paho:org.eclipse.paho.android.service:1.1.1'
     provided 'com.google.android.wearable:wearable:2.1.0'

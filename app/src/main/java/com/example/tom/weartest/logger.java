@@ -8,6 +8,7 @@ import android.widget.Toast;
  */
 
 public final class logger {
+    final static boolean debugToWatch = false;
     public static void log(String mainText, Context context, boolean debugToWatch){
         System.out.println("LOG: " + mainText);
         if (debugToWatch) {
@@ -17,6 +18,8 @@ public final class logger {
 
     public static void log(String mainText, Context context){
         System.out.println("LOG: " + mainText);
+        if (debugToWatch) {
             Toast.makeText(context, "LOG: " + mainText, Toast.LENGTH_SHORT).show();
+        }
     }
 }

@@ -1,57 +1,69 @@
 package com.example.tom.weartest;
 
+import android.content.Intent;
 import android.os.Bundle;
-import android.support.v7.widget.DefaultItemAnimator;
-import android.support.v7.widget.DividerItemDecoration;
-import android.support.wear.widget.WearableLinearLayoutManager;
 import android.support.wearable.activity.WearableActivity;
-import android.support.wear.widget.WearableRecyclerView;
+import android.view.View;
+import android.widget.Button;
+import android.widget.CompoundButton;
+import android.widget.ToggleButton;
 
-import java.util.ArrayList;
-import java.util.List;
+import org.jraf.android.androidwearcolorpicker.app.ColorPickActivity;
 
 public class MainActivity extends WearableActivity {
 
     MqttInstance mqttInstance;
-    private List<ItemEntry> itemList = new ArrayList<>();
-    private WearableRecyclerView recyclerView;
-    private testAdapter listAdapter;
-    private OnItemClickListener listClickListener;
+    private ToggleButton stateSelector;
+    private Button colorSelector;
 
     final String serverUri = "tcp://test.mosquitto.org:1883";
-    String clientId = "TAC";
-    final String publishTopic = "TestTopic";
+    String clientId = "Wear Client"; //todo: Add UID for client.
+
+    final int REQUEST_PICK_COLOR = 1;
+    int ledColor = 0;
 
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
+    protected void onCreate(final Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        setContentView(R.layout.activity_main);
+        setContentView(R.layout.led_control);
         mqttInstance = new MqttInstance(getApplicationContext(), serverUri, clientId);
 
-        recyclerView = findViewById(R.id.recycler_view);
+        stateSelector = findViewById(R.id.stateSelector);
+        colorSelector = findViewById(R.id.colourButton);
 
-        listClickListener = new OnItemClickListener() {
+        stateSelector.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
-            public void onItemClick(ItemEntry item) {
-                logger.log("Item Clicked: " + item.getText(), getApplicationContext());
-                mqttInstance.publishMessage(publishTopic, item.getText());
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                logger.log(Boolean.toString(isChecked), getApplicationContext());
+                mqttInstance.publishMessage("home/ledstrip/relay/0", isChecked ? "1" : "0");
             }
-        };
+        });
 
-        listAdapter = new testAdapter(itemList, listClickListener);
+        colorSelector.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                logger.log("Color", getApplicationContext(), true);
+                Intent intent = new ColorPickActivity.IntentBuilder().oldColor(ledColor).build(getApplicationContext());
+                startActivityForResult(intent, REQUEST_PICK_COLOR);
+            }
+        });
+    }
 
-        recyclerView.setLayoutManager(new WearableLinearLayoutManager(getApplicationContext()));
-        recyclerView.setItemAnimator(new DefaultItemAnimator());
-        recyclerView.setCircularScrollingGestureEnabled(true);
-        recyclerView.setEdgeItemsCenteringEnabled(true);
-        recyclerView.addItemDecoration(new DividerItemDecoration(this, WearableLinearLayoutManager.VERTICAL));
-        recyclerView.setAdapter(listAdapter);
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        switch (requestCode) {
+            case REQUEST_PICK_COLOR:
+                if (resultCode == RESULT_CANCELED) {
+                    // The user pressed 'Cancel'
+                    break;
+                }
 
-        for (int i = 0; i < 60; i++) {
-            itemList.add(new ItemEntry(Integer.toString(i)));
+                ledColor = ColorPickActivity.getPickedColor(data);
+                logger.log("pickedColor=" + Integer.toHexString(ledColor), this.getApplicationContext());
+                mqttInstance.publishMessage("home/ledstrip/color", Integer.toHexString(ledColor));
+                break;
         }
-
-        listAdapter.notifyDataSetChanged();
     }
 }
