@@ -4,11 +4,11 @@ package com.example.tom.weartest;
  * Created by tom on 12/25/17.
  */
 
-public class itemEntry {
+public class ItemEntry {
 
     private String text;
 
-    public itemEntry(String text) {
+    public ItemEntry(String text) {
         this.text = text;
     }
 

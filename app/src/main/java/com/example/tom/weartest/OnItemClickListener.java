@@ -5,5 +5,5 @@ package com.example.tom.weartest;
  */
 
 public interface OnItemClickListener {
-    void onItemClick(itemEntry item);
+    void onItemClick(ItemEntry item);
 }

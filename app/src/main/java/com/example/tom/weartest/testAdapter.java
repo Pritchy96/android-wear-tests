@@ -15,10 +15,10 @@ import java.util.List;
 
 public class testAdapter extends WearableRecyclerView.Adapter<testAdapter.ViewHolder>  {
 
-    private List<itemEntry> itemList;
+    private List<ItemEntry> itemList;
     private OnItemClickListener listener;
 
-    public testAdapter(List<itemEntry> itemList, OnItemClickListener listener) {
+    public testAdapter(List<ItemEntry> itemList, OnItemClickListener listener) {
         this.itemList = itemList;
         this.listener = listener;
     }
@@ -52,7 +52,7 @@ public class testAdapter extends WearableRecyclerView.Adapter<testAdapter.ViewHo
             text = view.findViewById(R.id.text);
         }
 
-        public void bind(final itemEntry item, final OnItemClickListener listener) {
+        public void bind(final ItemEntry item, final OnItemClickListener listener) {
 
             text.setText(item.getText());
 
