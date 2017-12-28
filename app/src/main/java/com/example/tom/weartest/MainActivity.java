@@ -1,19 +1,21 @@
 package com.example.tom.weartest;
 
 import android.content.Intent;
+import android.content.res.ColorStateList;
+import android.graphics.Color;
 import android.os.Bundle;
 import android.support.wearable.activity.WearableActivity;
 import android.view.View;
 import android.widget.Button;
 import android.widget.CompoundButton;
-import android.widget.ToggleButton;
+import android.widget.Switch;
 
 import org.jraf.android.androidwearcolorpicker.app.ColorPickActivity;
 
 public class MainActivity extends WearableActivity {
 
     MqttInstance mqttInstance;
-    private ToggleButton stateSelector;
+    private Switch stateSelector;
     private Button colorSelector;
 
     final String serverUri = "tcp://test.mosquitto.org:1883";
@@ -64,6 +66,10 @@ public class MainActivity extends WearableActivity {
                 ledColor = ColorPickActivity.getPickedColor(data);
 
                 logger.log("pickedColor=" + Integer.toHexString(ledColor), this.getApplicationContext());
+
+                ColorStateList selectedColorStateList = ColorStateList.valueOf(ledColor);
+                colorSelector.setBackgroundTintList(selectedColorStateList);
+                stateSelector.setThumbTintList(selectedColorStateList);
                 mqttInstance.publishMessage("home/ledstrip/color", "#" + Integer.toHexString(ledColor).substring(2));
                 break;
         }
