@@ -22,7 +22,7 @@ public class MainActivity extends WearableActivity {
     String clientId = "Wear Client"; //todo: Add UID for client.
 
     final int REQUEST_PICK_COLOR = 1;
-    int ledColor = 0;
+    int ARGBcolor = 0;
 
     @Override
     protected void onCreate(final Bundle savedInstanceState) {
@@ -46,7 +46,7 @@ public class MainActivity extends WearableActivity {
             @Override
             public void onClick(View v) {
                 logger.log("Color", getApplicationContext());
-                Intent intent = new ColorPickActivity.IntentBuilder().oldColor(ledColor).build(getApplicationContext());
+                Intent intent = new ColorPickActivity.IntentBuilder().oldColor(ARGBcolor).build(getApplicationContext());
                 startActivityForResult(intent, REQUEST_PICK_COLOR);
             }
         });
@@ -62,15 +62,37 @@ public class MainActivity extends WearableActivity {
                     break;
                 }
 
-                //#AARRGGBB (in Hex)
-                ledColor = ColorPickActivity.getPickedColor(data);
+                //0xAARRGGBB
+                ARGBcolor = ColorPickActivity.getPickedColor(data);
 
-                logger.log("pickedColor=" + Integer.toHexString(ledColor), this.getApplicationContext());
+                int ARGB_a = (ARGBcolor >> 24) & 0xff; // or color >>> 24
+                int ARGB_r = (ARGBcolor >> 16) & 0xff;
+                int ARGB_g = (ARGBcolor >> 8) & 0xff;
+                int ARGB_b = (ARGBcolor) & 0xff;
 
-                ColorStateList selectedColorStateList = ColorStateList.valueOf(ledColor);
+                //LED strip only takes RGB, no alpha channel.
+                int RGB_r, RGB_g, RGB_b;
+                if (ARGB_a == 255) {
+                    RGB_r = ARGB_r;
+                    RGB_g = ARGB_g;
+                    RGB_b = ARGB_b;
+                } else {
+                    double alpha = ARGB_a / 0xff;
+                    double diff = (1.0 - alpha) * 0xff;
+                    RGB_r = (int)((ARGB_r * alpha) + diff);
+                    RGB_g = (int)((ARGB_g * alpha) + diff);
+                    RGB_b = (int)((ARGB_b * alpha) + diff);
+                }
+
+                String publishMessage = "#" + String.format("%02X", RGB_r)
+                        + String.format("%02x", RGB_g) + String.format("%02x", RGB_b);
+
+                ColorStateList selectedColorStateList = ColorStateList.valueOf(ARGBcolor);
                 colorSelector.setBackgroundTintList(selectedColorStateList);
+                colorSelector.setTextColor(Color.rgb(255-RGB_r, 255-RGB_b, 255-RGB_b));
                 stateSelector.setThumbTintList(selectedColorStateList);
-                mqttInstance.publishMessage("home/ledstrip/color", "#" + Integer.toHexString(ledColor).substring(2));
+
+                mqttInstance.publishMessage("home/ledstrip/color", publishMessage);
                 break;
         }
     }
