@@ -43,7 +43,7 @@ public class MainActivity extends WearableActivity {
         colorSelector.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                logger.log("Color", getApplicationContext(), true);
+                logger.log("Color", getApplicationContext());
                 Intent intent = new ColorPickActivity.IntentBuilder().oldColor(ledColor).build(getApplicationContext());
                 startActivityForResult(intent, REQUEST_PICK_COLOR);
             }
@@ -60,9 +60,11 @@ public class MainActivity extends WearableActivity {
                     break;
                 }
 
+                //#AARRGGBB (in Hex)
                 ledColor = ColorPickActivity.getPickedColor(data);
+
                 logger.log("pickedColor=" + Integer.toHexString(ledColor), this.getApplicationContext());
-                mqttInstance.publishMessage("home/ledstrip/color", Integer.toHexString(ledColor));
+                mqttInstance.publishMessage("home/ledstrip/color", "#" + Integer.toHexString(ledColor).substring(2));
                 break;
         }
     }
