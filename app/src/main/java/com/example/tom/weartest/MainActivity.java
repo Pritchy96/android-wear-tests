@@ -1,6 +1,7 @@
 package com.example.tom.weartest;
 
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.res.ColorStateList;
 import android.graphics.Color;
 import android.os.Bundle;
@@ -18,11 +19,17 @@ public class MainActivity extends WearableActivity {
     private Switch stateSelector;
     private Button colorSelector;
 
-    final String serverUri = "tcp://test.mosquitto.org:1883";
+    final String serverUri = "tcp://192.168.1.2:1883";
+     //= "tcp://test.mosquitto.org:1883";
+
+
     String clientId = "Wear Client"; //todo: Add UID for client.
 
     final int REQUEST_PICK_COLOR = 1;
     int ARGBcolor = 0;
+
+    SharedPreferences prefs;
+    SharedPreferences.Editor prefEditor;
 
     @Override
     protected void onCreate(final Bundle savedInstanceState) {
@@ -33,12 +40,16 @@ public class MainActivity extends WearableActivity {
 
         stateSelector = findViewById(R.id.stateSelector);
         colorSelector = findViewById(R.id.colourButton);
+        loadStates();
 
         stateSelector.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
                 logger.log(Boolean.toString(isChecked), getApplicationContext());
-                mqttInstance.publishMessage("home/ledstrip/relay/0", isChecked ? "1" : "0");
+                mqttInstance.publishMessage("officestrip/relay/0/set", isChecked ? "1" : "0");
+
+                prefEditor.putBoolean("led_state", isChecked);
+                prefEditor.commit();
             }
         });
 
@@ -50,6 +61,24 @@ public class MainActivity extends WearableActivity {
                 startActivityForResult(intent, REQUEST_PICK_COLOR);
             }
         });
+
+    }
+
+    public void loadStates() {
+        prefs = getApplicationContext().getSharedPreferences("led_color_prefs", 0);
+        prefEditor = prefs.edit();
+
+        Boolean ledState = prefs.getBoolean("led_state", false);
+        //stateSelector.setChecked(ledState);
+
+        int colorInt = prefs.getInt("led_color", Color.GRAY);
+        //This is RGB, not RGBA, so easier to save than to calculate.
+        int colorInvert = prefs.getInt("led_color_invert", Color.BLACK);
+
+        ColorStateList selectedColorStateList = ColorStateList.valueOf(colorInt);
+        colorSelector.setBackgroundTintList(selectedColorStateList);
+        colorSelector.setTextColor(colorInvert);
+        stateSelector.setThumbTintList(selectedColorStateList);
     }
 
     @Override
@@ -89,10 +118,15 @@ public class MainActivity extends WearableActivity {
 
                 ColorStateList selectedColorStateList = ColorStateList.valueOf(ARGBcolor);
                 colorSelector.setBackgroundTintList(selectedColorStateList);
-                colorSelector.setTextColor(Color.rgb(255-RGB_r, 255-RGB_b, 255-RGB_b));
+                int invertedcolor = Color.rgb(255-RGB_r, 255-RGB_b, 255-RGB_b);
+                colorSelector.setTextColor(invertedcolor);
                 stateSelector.setThumbTintList(selectedColorStateList);
 
-                mqttInstance.publishMessage("home/ledstrip/color", publishMessage);
+                mqttInstance.publishMessage("officestrip/color/set", publishMessage);
+
+                prefEditor.putInt("led_color_invert", invertedcolor);
+                prefEditor.putInt("led_color", ARGBcolor);
+                prefEditor.commit();
                 break;
         }
     }

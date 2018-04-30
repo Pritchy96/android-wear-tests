@@ -16,6 +16,8 @@ import org.eclipse.paho.client.mqttv3.MqttException;
 import org.eclipse.paho.client.mqttv3.MqttCallbackExtended;
 import org.eclipse.paho.client.mqttv3.MqttMessage;
 
+import static org.eclipse.paho.client.mqttv3.MqttConnectOptions.MQTT_VERSION_3_1;
+
 public class MqttInstance {
     MqttAndroidClient mqttAndroidClient;
     final String serverUri, clientId;
@@ -60,7 +62,7 @@ public class MqttInstance {
 
         try {
             //todo: set up logger system.
-            System.out.print("Connecting to " + serverUri);
+            logger.log("Connecting to " + serverUri, context);
             mqttAndroidClient.connect(mqttConnectOptions, null, new IMqttActionListener() {
                 @Override
                 public void onSuccess(IMqttToken asyncActionToken) {
@@ -77,7 +79,7 @@ public class MqttInstance {
 
                 @Override
                 public void onFailure(IMqttToken asyncActionToken, Throwable exception) {
-                    System.out.print("Failed to connect to: " + serverUri);
+                    logger.log("Failed to connect to: " + serverUri, context);
                 }
             });
         } catch (MqttException ex){
@@ -86,13 +88,18 @@ public class MqttInstance {
     }
 
     public void publishMessage(String topic, String content){
+        if (!mqttAndroidClient.isConnected()) {
+            logger.log("Attempted a publish before connecting!", context);
+
+            return;
+        }
         try {
             MqttMessage message = new MqttMessage();
             message.setPayload(content.getBytes());
             mqttAndroidClient.publish(topic, message);
-            System.out.print("Message Published");
+            logger.log("Message Published", context);
             if(!mqttAndroidClient.isConnected()){
-                System.out.print(mqttAndroidClient.getBufferedMessageCount() + " messages in buffer.");
+                logger.log(mqttAndroidClient.getBufferedMessageCount() + " messages in buffer.", context);
             }
         } catch (MqttException e) {
             System.err.println("Error Publishing: " + e.getMessage());
